@@ -7,6 +7,8 @@ import 'package:provider/provider.dart';
 import 'package:minimal_notes_app/models/note.dart';
 import 'package:flutter_staggered_grid_view/flutter_staggered_grid_view.dart';
 
+import 'note_edit_page.dart';
+
 class NotesPage extends StatefulWidget {
   const NotesPage({super.key});
 
@@ -15,7 +17,6 @@ class NotesPage extends StatefulWidget {
 }
 
 class _NotesPageState extends State<NotesPage> {
-  //text controller
   final textController = TextEditingController();
   final textController2 = TextEditingController();
 
@@ -25,228 +26,45 @@ class _NotesPageState extends State<NotesPage> {
     readNotes();
   }
 
-  //create
   void createNote() {
     textController.clear();
     textController2.clear();
 
-    showDialog(
-      context: context,
-      builder: (context) => Dialog(
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-        backgroundColor: Theme.of(context).colorScheme.background,
-        child: Padding(
-          padding: const EdgeInsets.all(20.0),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              const SizedBox(height: 20),
-              const Padding(
-                padding: EdgeInsets.only(bottom: 20.0,left: 10.0),
-                child: Text(
-                  'New Note',
-                  style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
-                ),
-              ),
-              Padding(
-                padding: const EdgeInsets.all(8.0),
-                child: TextField(
-                  controller: textController,
-                  cursorColor: Theme.of(context).colorScheme.inversePrimary,
-                  decoration: InputDecoration(
-                    filled: true,
-
-                    border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(10.0),
-                        borderSide: BorderSide.none
-                    ),
-                    fillColor: Theme.of(context).colorScheme.primary,
-                    hintText: 'Enter Note Title',
-                  ),
-                ),
-              ),
-              Padding(
-                padding: const EdgeInsets.all(8.0),
-                child: TextField(
-                  controller: textController2,
-                  keyboardType: TextInputType.multiline,
-                  maxLines: 5,
-                  cursorColor: Theme.of(context).colorScheme.inversePrimary,
-                  decoration: InputDecoration(
-                    filled: true,
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(10.0),
-                      borderSide: BorderSide.none
-                    ),
-                    fillColor: Theme.of(context).colorScheme.primary,
-                    hintText: 'Enter Note Description',
-                  ),
-                ),
-              ),
-              Row(
-                crossAxisAlignment: CrossAxisAlignment.end,
-                mainAxisAlignment: MainAxisAlignment.end,
-                children: [
-                  MaterialButton(
-                    onPressed: () {
-                      Navigator.pop(context);
-                    },
-                    padding: EdgeInsets.all(20),
-                    child: Text(
-                      'Back',
-                      style: TextStyle(
-                        fontSize: 15,
-                        fontWeight: FontWeight.bold,
-                        color: Theme.of(context).colorScheme.inversePrimary,
-                      ),
-                    ),
-                  ),
-                  MaterialButton(
-                    onPressed: () {
-                      context.read<NoteDatabase>().addNote(
-                        textController.text,
-                        textController2.text,
-                      );
-                      textController.clear();
-                      textController2.clear();
-                      Navigator.pop(context);
-                    },
-                    padding: EdgeInsets.all(20),
-                    child: Text(
-                      'Create',
-                      style: TextStyle(
-                        fontSize: 15,
-                        fontWeight: FontWeight.bold,
-                        color: Theme.of(context).colorScheme.inversePrimary,
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-            ],
-          ),
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => NoteEditPage(
+          titleController: textController,
+          descriptionController: textController2,
         ),
       ),
     );
   }
 
-  //read
   void readNotes() {
     context.read<NoteDatabase>().fetchNotes();
   }
 
-  //update
   void updateNote(Note note) {
     textController.text = note.title;
     textController2.text = note.description;
-    showDialog(
-      context: context,
-      builder: (context) => Dialog(
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-        backgroundColor: Theme.of(context).colorScheme.background,
-        child: Padding(
-          padding: const EdgeInsets.all(20.0),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              const SizedBox(height: 20),
-              const Padding(
-                padding: EdgeInsets.only(bottom: 20.0),
-                child: Text(
-                  'Update Note',
-                  style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
-                ),
-              ),
-              Padding(
-                padding: const EdgeInsets.all(8.0),
-                child: TextField(
-                  controller: textController,
-                  cursorColor: Theme.of(context).colorScheme.inversePrimary,
-                  decoration: InputDecoration(
-                    filled: true,
-                    border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(10.0),
-                        borderSide: BorderSide.none
-                    ),
-                    fillColor: Theme.of(context).colorScheme.primary,
-                    hintText: 'Enter Note Title',
-                  ),
-                ),
-              ),
-              Padding(
-                padding: const EdgeInsets.all(8.0),
-                child: TextField(
-                  controller: textController2,
-                  cursorColor: Theme.of(context).colorScheme.inversePrimary,
-                  keyboardType: TextInputType.multiline,
-                  maxLines: 5,
-                  decoration: InputDecoration(
-                    filled: true,
-                    border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(10.0),
-                        borderSide: BorderSide.none
-                    ),
-                    fillColor: Theme.of(context).colorScheme.primary,
-                    hintText: 'Enter Note Description',
-                  ),
-                ),
-              ),
-              Row(
-                crossAxisAlignment: CrossAxisAlignment.end,
-                mainAxisAlignment: MainAxisAlignment.end,
-                children: [
-                  MaterialButton(
-                    onPressed: () {
-                      Navigator.pop(context);
-                    },
-                    padding: EdgeInsets.all(20),
-                    child: Text(
-                      'Back',
-                      style: TextStyle(
-                        fontSize: 15,
-                        fontWeight: FontWeight.bold,
-                        color: Theme.of(context).colorScheme.inversePrimary,
-                      ),
-                    ),
-                  ),
-                  MaterialButton(
-                    onPressed: () {
-                      context.read<NoteDatabase>().updateNote(
-                        note.id,
-                        textController.text,
-                        textController2.text,
-                      );
-                      textController.clear();
-                      textController2.clear();
-                      Navigator.pop(context);
-                    },
-                    padding: EdgeInsets.all(20),
-                    child: Text(
-                      'Update',
-                      style: TextStyle(
-                        fontSize: 15,
-                        fontWeight: FontWeight.bold,
-                        color: Theme.of(context).colorScheme.inversePrimary,
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-            ],
-          ),
+
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => NoteEditPage(
+          titleController: textController,
+          descriptionController: textController2,
+          note: note,
         ),
       ),
     );
   }
 
-  //delete
   void deleteNote(int id) {
     context.read<NoteDatabase>().deleteNote(id);
   }
+
 
   bool isPressed = false;
 

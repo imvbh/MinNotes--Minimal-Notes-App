@@ -50,10 +50,15 @@ class NoteTile extends StatelessWidget {
             ),
             subtitle: Padding(
               padding: const EdgeInsets.only(top: 8.0),
-              child: Text(
-                description,
-                style: TextStyle(
-                  color: Theme.of(context).colorScheme.inversePrimary,
+              child: ConstrainedBox(
+                constraints: const BoxConstraints(
+                  maxHeight: 200
+                ),
+                child: Text(
+                  description,
+                  style: TextStyle(
+                    color: Theme.of(context).colorScheme.inversePrimary,
+                  ),
                 ),
               ),
             ),
