@@ -45,10 +45,10 @@ MinNotes is a minimalist note-taking application built with Flutter. It offers a
 
 ## Usage
 
-    Add a Note: Tap the floating action button and enter the note details.
-    Update a Note: Tap on a note to edit its details.
-    Delete a Note: Long press on a note to delete it.
-    Toggle Theme: Use the theme toggle button to switch between light and dark mode.
+Add a Note: Tap the floating action button and enter the note details.
+Update a Note: Tap on a note to edit its details.
+Delete a Note: Long press on a note to delete it.
+Toggle Theme: Use the theme toggle button to switch between light and dark mode.
 
 ## Dependencies
 
@@ -62,10 +62,10 @@ MinNotes is a minimalist note-taking application built with Flutter. It offers a
 
 ## Contributing
 
-    Contributions are welcome! Please fork the repository and create a pull request with your changes. Make sure to follow the code style and include tests for new features.
+Contributions are welcome! Please fork the repository and create a pull request with your changes. Make sure to follow the code style and include tests for new features.
 ## License
 
-    This project is licensed under the MIT License - see the LICENSE file for details.
+This project is licensed under the MIT License - see the LICENSE file for details.
 ## Credits
 
-    Made with ❤️ by imvbh
+Made with ❤️ by imvbh
