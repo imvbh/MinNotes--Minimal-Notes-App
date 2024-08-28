@@ -41,9 +41,12 @@ dependencies:
   provider: ^6.1.2
   google_fonts: 6.1.0
   popover: ^0.2.8+2
+  image_picker: ^1.1.2
+  flutter_sound: ^9.6.0
   flutter_quill: ^10.4.8
   zefyr: ^1.0.0-rc.5
   quill_delta: ^3.0.0-nullsafety.2
+  permission_handler: ^11.3.1
 
 dev_dependencies:
   flutter_test:
