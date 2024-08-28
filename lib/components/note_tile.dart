@@ -23,7 +23,7 @@ class NoteTile extends StatelessWidget {
       onLongPress: () => showPopover(
         width: 120,
         height: 80,
-        backgroundColor: Theme.of(context).colorScheme.background,
+        backgroundColor: Theme.of(context).colorScheme.surface,
         context: context,
         bodyBuilder: (context) => NoteSettings(
           onEditTap: onEditPressed,

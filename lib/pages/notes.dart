@@ -80,10 +80,10 @@ class _NotesPageState extends State<NotesPage> {
     return Scaffold(
       appBar: AppBar(
         elevation: 0,
-        backgroundColor: Colors.transparent,
+        backgroundColor: Theme.of(context).colorScheme.surface,
         foregroundColor: Theme.of(context).colorScheme.inversePrimary,
       ),
-      backgroundColor: Theme.of(context).colorScheme.background,
+      backgroundColor: Theme.of(context).colorScheme.surface,
       floatingActionButton: FloatingActionButton(
         onPressed: createNote,
         backgroundColor: Theme.of(context).colorScheme.secondary,
@@ -113,7 +113,7 @@ class _NotesPageState extends State<NotesPage> {
                 });
                 Provider.of<ThemeProvider>(context,listen: false).toggleTheme()
                 ;
-              }, icon:(isPressed) ? Icon(Icons.light_mode): Icon(Icons.dark_mode),
+              }, icon:(isPressed) ? const Icon(Icons.light_mode): const Icon(Icons.dark_mode),
                 color: Theme.of(context).colorScheme.inversePrimary,
                 iconSize: 30,
                   ),

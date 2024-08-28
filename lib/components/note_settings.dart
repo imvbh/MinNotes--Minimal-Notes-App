@@ -18,7 +18,7 @@ class NoteSettings extends StatelessWidget {
           },
           child: Container(
             height: 40,
-            color: Theme.of(context).colorScheme.background,
+            color: Theme.of(context).colorScheme.surface,
             child: const Center(child: Text("Edit")),
           ),
         ),
@@ -30,7 +30,7 @@ class NoteSettings extends StatelessWidget {
           },
           child: Container(
             height: 40,
-            color: Theme.of(context).colorScheme.background,
+            color: Theme.of(context).colorScheme.surface,
             child: const Center(child: Text("Delete",style: TextStyle(color: Colors.red),)),
           ),
         ),
