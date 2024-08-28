@@ -8,6 +8,7 @@ class NoteTile extends StatelessWidget {
   final String description;
   final void Function()? onEditPressed;
   final void Function()? onDeletePressed;
+  final void Function()? onHidePressed;
 
   const NoteTile({
     super.key,
@@ -15,6 +16,7 @@ class NoteTile extends StatelessWidget {
     required this.description,
     required this.onEditPressed,
     required this.onDeletePressed,
+    required this.onHidePressed,
   });
 
   @override
@@ -22,12 +24,14 @@ class NoteTile extends StatelessWidget {
     return GestureDetector(
       onLongPress: () => showPopover(
         width: 120,
-        height: 80,
+        height: 120,
         backgroundColor: Theme.of(context).colorScheme.surface,
         context: context,
         bodyBuilder: (context) => NoteSettings(
           onEditTap: onEditPressed,
           onDeleteTap: onDeletePressed,
+          onHideTap: onHidePressed,
+          hideButtonText: '',
         ),
       ),
       onTap: onEditPressed,
@@ -51,9 +55,7 @@ class NoteTile extends StatelessWidget {
             subtitle: Padding(
               padding: const EdgeInsets.only(top: 8.0),
               child: ConstrainedBox(
-                constraints: const BoxConstraints(
-                  maxHeight: 200
-                ),
+                constraints: const BoxConstraints(maxHeight: 200),
                 child: Text(
                   description,
                   style: TextStyle(
@@ -62,7 +64,6 @@ class NoteTile extends StatelessWidget {
                 ),
               ),
             ),
-
           ),
         ),
       ),

@@ -11,12 +11,14 @@ class NoteEditPage extends StatefulWidget {
   final TextEditingController titleController;
   final TextEditingController descriptionController;
   final Note? note;
+  final bool showHiddenNotes;
 
-  NoteEditPage({
+  const NoteEditPage({
     Key? key,
     required this.titleController,
     required this.descriptionController,
     this.note,
+    required this.showHiddenNotes,
   }) : super(key: key);
 
   @override

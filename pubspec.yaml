@@ -44,9 +44,12 @@ dependencies:
   image_picker: ^1.1.2
   flutter_sound: ^9.6.0
   flutter_quill: ^10.4.8
+  fluttertoast: ^8.1.1
   zefyr: ^1.0.0-rc.5
   quill_delta: ^3.0.0-nullsafety.2
   permission_handler: ^11.3.1
+  pattern_lock: ^2.0.0
+  shared_preferences: ^2.3.2
 
 dev_dependencies:
   flutter_test:
