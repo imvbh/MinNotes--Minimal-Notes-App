@@ -9,4 +9,11 @@ class Note {
   Id id = Isar.autoIncrement;
   late String title;
   late String description;
+  late bool isHidden;
+  late String pattern;
+
+  Note({
+    this.pattern = '',
+    this.isHidden = false, // Initialize as needed
+  });
 }
