@@ -6,14 +6,16 @@ import 'note_settings.dart';
 class NoteTile extends StatelessWidget {
   final String title;
   final String description;
+  final bool isHidden; // Track hidden state
   final void Function()? onEditPressed;
   final void Function()? onDeletePressed;
-  final void Function()? onHidePressed;
+  final void Function(bool isHidden)? onHidePressed; // Accept bool
 
   const NoteTile({
     super.key,
     required this.title,
     required this.description,
+    required this.isHidden,
     required this.onEditPressed,
     required this.onDeletePressed,
     required this.onHidePressed,
@@ -24,14 +26,19 @@ class NoteTile extends StatelessWidget {
     return GestureDetector(
       onLongPress: () => showPopover(
         width: 120,
-        height: 120,
+        height: 160, // Increase height for new button
         backgroundColor: Theme.of(context).colorScheme.surface,
         context: context,
         bodyBuilder: (context) => NoteSettings(
           onEditTap: onEditPressed,
           onDeleteTap: onDeletePressed,
-          onHideTap: onHidePressed,
-          hideButtonText: '',
+          onHideTap: (bool hidden) {
+            if (onHidePressed != null) {
+              onHidePressed!(hidden);
+            }
+          },
+          initialHiddenState: isHidden, // Pass initial state
+          hideButtonText: isHidden ? 'Unhide' : 'Hide',
         ),
       ),
       onTap: onEditPressed,

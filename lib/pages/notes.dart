@@ -23,11 +23,18 @@ class _NotesPageState extends State<NotesPage> {
   final textController = TextEditingController();
   final textController2 = TextEditingController();
   bool showHiddenNotes = false;
+  bool isPressed = false;
 
   @override
   void initState() {
     super.initState();
-    readNotes();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      setState(() {
+        showHiddenNotes = widget.showHiddenNotes;
+        context.read<NoteDatabase>().setShowHiddenNotes(showHiddenNotes);
+        readNotes();
+      });
+    });
   }
 
   void createNote() {
@@ -40,7 +47,7 @@ class _NotesPageState extends State<NotesPage> {
         builder: (context) => NoteEditPage(
           titleController: textController,
           descriptionController: textController2,
-          showHiddenNotes: widget.showHiddenNotes,
+          showHiddenNotes: showHiddenNotes,
         ),
       ),
     );
@@ -61,24 +68,29 @@ class _NotesPageState extends State<NotesPage> {
           titleController: textController,
           descriptionController: textController2,
           note: note,
-          showHiddenNotes: widget.showHiddenNotes,
+          showHiddenNotes: showHiddenNotes,
         ),
       ),
-    );
+    ).then((updatedNote) {
+      if (updatedNote != null) {
+        context.read<NoteDatabase>().updateNote(
+              updatedNote.id,
+              updatedNote.title,
+              updatedNote.description,
+              isHidden: updatedNote.isHidden,
+            );
+      }
+    });
   }
 
   void deleteNote(int id) {
     context.read<NoteDatabase>().deleteNote(id);
   }
 
-  bool isPressed = false;
-
   @override
   Widget build(BuildContext context) {
-    //db
     final noteDatabase = context.watch<NoteDatabase>();
 
-    //Current Notes
     List<Note> currentNotes = noteDatabase.currentNotes;
     bool isEmpty = currentNotes.isEmpty;
 
@@ -102,7 +114,6 @@ class _NotesPageState extends State<NotesPage> {
       body: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          //heading
           Padding(
             padding: const EdgeInsets.only(left: 25.0, right: 25.0),
             child: Row(
@@ -111,12 +122,11 @@ class _NotesPageState extends State<NotesPage> {
                 GestureDetector(
                   onDoubleTap: () {
                     if (showHiddenNotes) {
-                      // Already in hidden notes mode, toggle back to normal mode
                       setState(() {
                         showHiddenNotes = false;
+                        context.read<NoteDatabase>().setShowHiddenNotes(false);
                       });
                     } else {
-                      // Show PIN page to access hidden notes
                       Navigator.push(
                         context,
                         MaterialPageRoute(
@@ -124,9 +134,11 @@ class _NotesPageState extends State<NotesPage> {
                         ),
                       ).then((value) {
                         if (value == true) {
-                          // PIN is correct, toggle to hidden notes mode
                           setState(() {
                             showHiddenNotes = true;
+                            context
+                                .read<NoteDatabase>()
+                                .setShowHiddenNotes(true);
                           });
                         }
                       });
@@ -166,7 +178,6 @@ class _NotesPageState extends State<NotesPage> {
               child: Divider(
                 color: Theme.of(context).colorScheme.inversePrimary,
               )),
-          //Notes
           Expanded(
             child: (isEmpty)
                 ? Center(
@@ -199,11 +210,23 @@ class _NotesPageState extends State<NotesPage> {
                         return NoteTile(
                             title: note.title,
                             description: note.description,
+                            isHidden: note.isHidden, // Pass the isHidden state
                             onEditPressed: () => updateNote(note),
                             onDeletePressed: () => deleteNote(note.id),
-                            onHidePressed: () {
-                              note.isHidden = !note.isHidden;
-                              setState(() {});
+                            onHidePressed: (bool hidden) {
+                              setState(() {
+                                note.isHidden = hidden;
+                              });
+                              // Update note in the database
+                              WidgetsBinding.instance.addPostFrameCallback((_) {
+                                context.read<NoteDatabase>().updateNote(
+                                      note.id,
+                                      note.title,
+                                      note.description,
+                                      isHidden:
+                                          hidden, // Pass the new hidden state
+                                    );
+                              });
                             });
                       },
                     ),

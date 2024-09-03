@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_sound/flutter_sound.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:provider/provider.dart';
 import 'package:minimal_notes_app/models/note_database.dart';
@@ -27,6 +26,18 @@ class NoteEditPage extends StatefulWidget {
 
 class _NoteEditPageState extends State<NoteEditPage> {
   int _formattingStyle = 0;
+  bool _isHidden = false;
+
+  @override
+  void initState() {
+    super.initState();
+    // Initialize _isHidden based on the note's current hidden state or showHiddenNotes
+    if (widget.note != null) {
+      _isHidden = widget.note!.isHidden;
+    } else {
+      _isHidden = widget.showHiddenNotes;
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -52,6 +63,7 @@ class _NoteEditPageState extends State<NoteEditPage> {
                         widget.note!.id,
                         widget.titleController.text,
                         widget.descriptionController.text,
+                        isHidden: _isHidden, // Pass the isHidden parameter
                       );
                 }
                 Navigator.pop(context);
@@ -238,7 +250,6 @@ class _NoteEditPageState extends State<NoteEditPage> {
                       });
                     },
                   ),
-
                   IconButton(
                     icon: Icon(Icons.mic),
                     onPressed: () {
@@ -247,8 +258,21 @@ class _NoteEditPageState extends State<NoteEditPage> {
                       });
                     },
                   ),
+                  IconButton(
+                    icon: Icon(
+                      _isHidden ? Icons.visibility_off : Icons.visibility,
+                      color: Theme.of(context).colorScheme.inversePrimary,
+                    ),
+                    onPressed: () {
+                      setState(() {
+                        _isHidden = !_isHidden;
+                      });
+                    },
+                  ),
                 ],
               ),
+              
+              
             ],
           ),
         ),
@@ -257,32 +281,25 @@ class _NoteEditPageState extends State<NoteEditPage> {
   }
 
   Future<void> _requestPermissionAndPickImage() async {
-    var status = await Permission.storage.status;
-    if (status.isDenied) {
-      await Permission.storage.request();
-      status = await Permission.storage.status;
-    }
+    final status = await Permission.photos.request();
     if (status.isGranted) {
-      final ImagePicker _picker = ImagePicker();
-      final XFile? image = await _picker.pickImage(source: ImageSource.gallery);
+      final imagePicker = ImagePicker();
+      final image = await imagePicker.pickImage(source: ImageSource.gallery);
+
       if (image != null) {
-        final File file = File(image.path);
-        // Store the image with the description text
-        widget.descriptionController.text += '\n[Image: ${file.path}]';
+        // Handle the selected image
       }
     } else {
-      print('Storage permission denied');
+      // Handle permission denied
     }
   }
 
   Future<void> _requestPermissionAndRecordAudio() async {
-    var status = await Permission.microphone.status;
-    if (status.isDenied) {
-      await Permission.microphone.request();
-      status = await Permission.microphone.status;
-    }
+    final status = await Permission.microphone.request();
     if (status.isGranted) {
-      print('Microphone permission');
+      // Handle audio recording
+    } else {
+      // Handle permission denied
     }
   }
 }
