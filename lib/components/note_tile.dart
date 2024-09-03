@@ -26,7 +26,7 @@ class NoteTile extends StatelessWidget {
     return GestureDetector(
       onLongPress: () => showPopover(
         width: 120,
-        height: 160, // Increase height for new button
+        height: 120,
         backgroundColor: Theme.of(context).colorScheme.surface,
         context: context,
         bodyBuilder: (context) => NoteSettings(
@@ -45,7 +45,9 @@ class NoteTile extends StatelessWidget {
       child: Container(
         decoration: BoxDecoration(
           color: Theme.of(context).colorScheme.primary,
-          borderRadius: BorderRadius.circular(10),
+          border: Border.all(
+              color: Theme.of(context).colorScheme.primary, width: 4),
+          borderRadius: BorderRadius.circular(15),
         ),
         margin: const EdgeInsets.only(top: 15, right: 10, left: 10),
         child: Padding(
@@ -56,7 +58,7 @@ class NoteTile extends StatelessWidget {
               style: TextStyle(
                 color: Theme.of(context).colorScheme.inversePrimary,
                 fontWeight: FontWeight.bold,
-                fontSize: 18,
+                fontSize: 20,
               ),
             ),
             subtitle: Padding(

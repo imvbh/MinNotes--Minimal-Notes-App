@@ -1,3 +1,5 @@
+import 'dart:math';
+
 import 'package:flutter/material.dart';
 import 'package:pattern_lock/pattern_lock.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -38,8 +40,15 @@ class _HiddenNotesPatternPageState extends State<HiddenNotesPatternPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: Theme.of(context).colorScheme.surface,
       appBar: AppBar(
-        title: const Text("Access Hidden Notes"),
+        elevation: 1,
+        foregroundColor: Theme.of(context).colorScheme.inversePrimary,
+        backgroundColor: Theme.of(context).colorScheme.surface,
+        title: Text(
+          "Access Hidden Notes",
+          style: TextStyle(color: Theme.of(context).colorScheme.inversePrimary),
+        ),
       ),
       body: Padding(
         padding: const EdgeInsets.all(20.0),
@@ -47,11 +56,13 @@ class _HiddenNotesPatternPageState extends State<HiddenNotesPatternPage> {
           children: [
             Text(
               _isSettingPattern
-                  ? "Set a pattern to access hidden notes:\n(Note: Pattern can't be changed)"
+                  ? "Set a pattern to access hidden notes:\n  (Note: Pattern can't be changed)"
                   : _isConfirmingPattern
                       ? "Confirm your pattern:"
-                      : "Enter hide mode:",
-              style: const TextStyle(fontSize: 18),
+                      : "Enter Your Pattern:",
+              style: TextStyle(
+                  fontSize: 18,
+                  color: Theme.of(context).colorScheme.inversePrimary),
             ),
             const SizedBox(height: 20),
             SizedBox(
@@ -88,13 +99,6 @@ class _HiddenNotesPatternPageState extends State<HiddenNotesPatternPage> {
                 },
               ),
             ),
-            const SizedBox(height: 20),
-            ElevatedButton(
-              onPressed: () {
-                Navigator.pop(context);
-              },
-              child: const Text("Back"),
-            ),
           ],
         ),
       ),
@@ -120,7 +124,7 @@ class _HiddenNotesPatternPageState extends State<HiddenNotesPatternPage> {
               onPressed: () {
                 Navigator.of(context).pop();
               },
-              child: const Text('OK'),
+              child:Text('OK',style: TextStyle(color: Theme.of(context).colorScheme.inversePrimary),),
             ),
           ],
         );

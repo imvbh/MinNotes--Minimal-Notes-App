@@ -22,8 +22,12 @@ class NotesPage extends StatefulWidget {
 class _NotesPageState extends State<NotesPage> {
   final textController = TextEditingController();
   final textController2 = TextEditingController();
+  final searchController = TextEditingController();
   bool showHiddenNotes = false;
   bool isPressed = false;
+  int crossAxisCount = 2; // Default crossAxisCount
+  bool reverseOrder = false; // Reverse order initially
+  String searchQuery = '';
 
   @override
   void initState() {
@@ -33,6 +37,12 @@ class _NotesPageState extends State<NotesPage> {
         showHiddenNotes = widget.showHiddenNotes;
         context.read<NoteDatabase>().setShowHiddenNotes(showHiddenNotes);
         readNotes();
+      });
+    });
+
+    searchController.addListener(() {
+      setState(() {
+        searchQuery = searchController.text.toLowerCase();
       });
     });
   }
@@ -87,25 +97,142 @@ class _NotesPageState extends State<NotesPage> {
     context.read<NoteDatabase>().deleteNote(id);
   }
 
+  void toggleCrossAxisCount() {
+    setState(() {
+      crossAxisCount = (crossAxisCount == 2) ? 1 : 2;
+    });
+  }
+
+  void toggleReverseOrder() {
+    setState(() {
+      reverseOrder = !reverseOrder;
+    });
+  }
+
   @override
   Widget build(BuildContext context) {
     final noteDatabase = context.watch<NoteDatabase>();
 
-    List<Note> currentNotes = noteDatabase.currentNotes;
+    List<Note> currentNotes = noteDatabase.currentNotes
+        .where((note) =>
+            note.title.toLowerCase().contains(searchQuery) ||
+            note.description.toLowerCase().contains(searchQuery))
+        .toList();
+
     bool isEmpty = currentNotes.isEmpty;
+
+    // Reverse list if reverseOrder is true
+    if (reverseOrder) {
+      currentNotes = currentNotes.reversed.toList();
+    }
+
+    int noteCount = showHiddenNotes
+        ? currentNotes.where((note) => note.isHidden).length
+        : currentNotes.where((note) => !note.isHidden).length;
 
     return Scaffold(
       appBar: AppBar(
         elevation: 0,
         backgroundColor: Theme.of(context).colorScheme.surface,
         foregroundColor: Theme.of(context).colorScheme.inversePrimary,
+        title: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 8.0),
+          child: TextField(
+            controller: searchController,
+            decoration: InputDecoration(
+              prefixIcon: Icon(Icons.search,
+                  color: Theme.of(context).colorScheme.secondary),
+              hintText: 'Search $noteCount notes...',
+              hintStyle:
+                  TextStyle(color: Theme.of(context).colorScheme.secondary),
+              filled: true,
+              fillColor: Theme.of(context).colorScheme.surface,
+              border: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(10.0),
+                borderSide: BorderSide.none,
+              ),
+            ),
+            onChanged: (query) {
+              setState(() {
+                searchQuery = query.toLowerCase();
+              });
+            },
+          ),
+        ),
+        actions: [
+          Padding(
+            padding: const EdgeInsets.all(8.0),
+            child: PopupMenuButton<int>(
+              onSelected: (value) {
+                switch (value) {
+                  case 0:
+                    setState(() {
+                      isPressed = !isPressed;
+                    });
+                    Provider.of<ThemeProvider>(context, listen: false)
+                        .toggleTheme();
+                    break;
+                  case 1:
+                    toggleCrossAxisCount();
+                    break;
+                  case 2:
+                    toggleReverseOrder();
+                    break;
+                }
+              },
+              itemBuilder: (context) => [
+                PopupMenuItem<int>(
+                  value: 0,
+                  child: Row(
+                    children: [
+                      Icon(
+                        isPressed ? Icons.dark_mode : Icons.light_mode,
+                        color: Theme.of(context).colorScheme.inversePrimary,
+                      ),
+                      SizedBox(width: 8),
+                      Text(isPressed ? "Dark Mode" : "Light Mode"),
+                    ],
+                  ),
+                ),
+                PopupMenuItem<int>(
+                  value: 1,
+                  child: Row(
+                    children: [
+                      Icon(
+                        crossAxisCount == 2 ? Icons.grid_on : Icons.list,
+                        color: Theme.of(context).colorScheme.inversePrimary,
+                      ),
+                      SizedBox(width: 8),
+                      Text(crossAxisCount == 2 ? "Grid View" : "List View"),
+                    ],
+                  ),
+                ),
+                PopupMenuItem<int>(
+                  value: 2,
+                  child: Row(
+                    children: [
+                      Icon(
+                        reverseOrder
+                            ? Icons.arrow_downward
+                            : Icons.arrow_upward,
+                        color: Theme.of(context).colorScheme.inversePrimary,
+                      ),
+                      SizedBox(width: 8),
+                      Text(reverseOrder ? "Oldest First" : "Newest First"),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
       ),
       backgroundColor: Theme.of(context).colorScheme.surface,
       floatingActionButton: FloatingActionButton(
         onPressed: () {
           createNote();
         },
-        backgroundColor: Theme.of(context).colorScheme.secondary,
+        backgroundColor: Theme.of(context).colorScheme.primary,
         child: Icon(
           Icons.add,
           color: Theme.of(context).colorScheme.inversePrimary,
@@ -146,35 +273,26 @@ class _NotesPageState extends State<NotesPage> {
                   },
                   child: Row(
                     children: [
-                      Text("MinNotes ",
+                      Center(
+                        child: Text(
+                          showHiddenNotes ? "Hidden Notes " : "MinNotes ",
                           style: GoogleFonts.dmSerifText(
-                            fontSize: 48,
+                            fontSize: 44,
                             color: Theme.of(context).colorScheme.inversePrimary,
-                          )),
-                      if (showHiddenNotes) const Icon(Icons.lock, size: 30),
+                          ),
+                        ),
+                      ),
+                      if (showHiddenNotes)
+                        const Icon(Icons.lock_outline, size: 30),
                     ],
                   ),
-                ),
-                IconButton(
-                  onPressed: () {
-                    setState(() {
-                      isPressed = !isPressed;
-                    });
-                    Provider.of<ThemeProvider>(context, listen: false)
-                        .toggleTheme();
-                  },
-                  icon: (isPressed)
-                      ? const Icon(Icons.light_mode)
-                      : const Icon(Icons.dark_mode),
-                  color: Theme.of(context).colorScheme.inversePrimary,
-                  iconSize: 30,
                 ),
               ],
             ),
           ),
           Container(
-              padding: const EdgeInsets.only(left: 25.0, right: 25.0),
-              margin: const EdgeInsets.all(20.0),
+              padding:
+                  const EdgeInsets.only(left: 35.0, right: 35.0, bottom: 4.0),
               child: Divider(
                 color: Theme.of(context).colorScheme.inversePrimary,
               )),
@@ -193,8 +311,8 @@ class _NotesPageState extends State<NotesPage> {
                 : Padding(
                     padding: const EdgeInsets.only(left: 10.0, right: 10.0),
                     child: MasonryGridView.count(
-                      crossAxisCount: 2,
-                      mainAxisSpacing: 5,
+                      crossAxisCount: crossAxisCount,
+                      mainAxisSpacing: 0,
                       crossAxisSpacing: 0,
                       itemCount: showHiddenNotes
                           ? currentNotes.where((note) => note.isHidden).length
@@ -207,6 +325,7 @@ class _NotesPageState extends State<NotesPage> {
                             : currentNotes
                                 .where((note) => !note.isHidden)
                                 .toList()[index];
+
                         return NoteTile(
                             title: note.title,
                             description: note.description,
