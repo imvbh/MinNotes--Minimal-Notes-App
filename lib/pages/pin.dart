@@ -1,5 +1,3 @@
-import 'dart:math';
-
 import 'package:flutter/material.dart';
 import 'package:pattern_lock/pattern_lock.dart';
 import 'package:shared_preferences/shared_preferences.dart';

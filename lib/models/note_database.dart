@@ -5,7 +5,7 @@ import 'package:path_provider/path_provider.dart';
 
 class NoteDatabase extends ChangeNotifier {
   static Isar? _isar;
-  bool _showHiddenNotes = false; // Tracks whether hidden notes should be shown
+  bool _showHiddenNotes = false;
 
   // Initialize the Isar database
   static Future<void> initialise() async {
@@ -15,7 +15,6 @@ class NoteDatabase extends ChangeNotifier {
       _isar = await Isar.open([NoteSchema], directory: dir.path);
     } catch (e) {
       print('Error initializing Isar database: $e');
-      // Handle the error as needed, possibly rethrow or log
     }
   }
 
@@ -29,22 +28,40 @@ class NoteDatabase extends ChangeNotifier {
   // List of notes
   final List<Note> currentNotes = [];
 
-  // Create a new note
-  Future<void> addNote(String title, String description) async {
+  // Start a new note or update an existing one in real-time
+  Future<Note> createBlankNote() async {
+  await initialise(); // Ensure Isar is initialized
+  final newNote = Note()
+    ..title = ''
+    ..description = ''
+    ..isHidden = _showHiddenNotes;
+
+  await _isar!.writeTxn(() async {
+    await _isar!.notes.put(newNote);
+  });
+
+  await fetchNotes(); // Refresh the list of notes
+  return newNote;
+}
+
+  Future<void> updateNote(int id, String newTitle, String newDescription,
+      {required bool isHidden}) async {
     await initialise(); // Ensure Isar is initialized
     try {
-      final newNote = Note()
-        ..title = title
-        ..description = description
-        ..isHidden = _showHiddenNotes; // Set isHidden based on app mode
+      final existingNote = await _isar!.notes.get(id);
+      if (existingNote != null) {
+        existingNote
+          ..title = newTitle
+          ..description = newDescription
+          ..isHidden = isHidden; // Update isHidden based on provided parameter
 
-      await _isar!.writeTxn(() async {
-        await _isar!.notes.put(newNote);
-      });
-      await fetchNotes(); // Refresh the list of notes
+        await _isar!.writeTxn(() async {
+          await _isar!.notes.put(existingNote);
+        });
+        await fetchNotes(); // Refresh the list of notes
+      }
     } catch (e) {
-      print('Error adding note: $e');
-      // Handle the error as needed
+      print('Error updating note: $e');
     }
   }
 
@@ -69,30 +86,6 @@ class NoteDatabase extends ChangeNotifier {
       notifyListeners(); // Notify listeners to refresh the UI
     } catch (e) {
       print('Error fetching notes: $e');
-      // Handle the error as needed
-    }
-  }
-
-  // Update an existing note
-  Future<void> updateNote(int id, String newTitle, String newDescription,
-      {required bool isHidden}) async {
-    await initialise(); // Ensure Isar is initialized
-    try {
-      final existingNote = await _isar!.notes.get(id);
-      if (existingNote != null) {
-        existingNote
-          ..title = newTitle
-          ..description = newDescription
-          ..isHidden = isHidden; // Update isHidden based on provided parameter
-
-        await _isar!.writeTxn(() async {
-          await _isar!.notes.put(existingNote);
-        });
-        await fetchNotes(); // Refresh the list of notes
-      }
-    } catch (e) {
-      print('Error updating note: $e');
-      // Handle the error as needed
     }
   }
 

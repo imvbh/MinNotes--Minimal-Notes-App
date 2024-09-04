@@ -26,6 +26,7 @@ class NoteEditPage extends StatefulWidget {
 class _NoteEditPageState extends State<NoteEditPage> {
   int _formattingStyle = 0;
   bool _isHidden = false;
+  Note? _currentNote;
 
   @override
   void initState() {
@@ -34,17 +35,38 @@ class _NoteEditPageState extends State<NoteEditPage> {
       _isHidden = widget.note!.isHidden;
       widget.titleController.text = widget.note!.title;
       widget.descriptionController.text = widget.note!.description;
+      _currentNote = widget.note;
     } else {
       _isHidden = widget.showHiddenNotes;
+      _createBlankNote(); // Create a blank note when no note exists
     }
+
+    // Listen to title and description changes to auto-save
+    widget.titleController.addListener(_autoSaveNote);
+    widget.descriptionController.addListener(_autoSaveNote);
   }
 
-  Future<void> _handleSave() async {
-    if (widget.note == null) {
-      // Create a new note
-      await context.read<NoteDatabase>().addNote(
+  Future<void> _createBlankNote() async {
+    _currentNote = await context.read<NoteDatabase>().createBlankNote();
+  }
+
+  @override
+  void dispose() {
+    // Remove listeners when the widget is disposed
+    widget.titleController.removeListener(_autoSaveNote);
+    widget.descriptionController.removeListener(_autoSaveNote);
+    super.dispose();
+  }
+
+  // Automatically save the note as the user types
+  Future<void> _autoSaveNote() async {
+    if (_currentNote != null) {
+      // Update the existing note
+      await context.read<NoteDatabase>().updateNote(
+            _currentNote!.id,
             widget.titleController.text,
             widget.descriptionController.text,
+            isHidden: _isHidden,
           );
     } else {
       // Update the existing note
@@ -55,7 +77,6 @@ class _NoteEditPageState extends State<NoteEditPage> {
             isHidden: _isHidden,
           );
     }
-    Navigator.pop(context);
   }
 
   @override
@@ -73,8 +94,7 @@ class _NoteEditPageState extends State<NoteEditPage> {
                 color: Theme.of(context).colorScheme.inversePrimary,
                 size: 25,
               ),
-              onPressed:
-                  _handleSave, // Save note when user presses the check button
+              onPressed: () => Navigator.pop(context), // Just close the page
             ),
           )
         ],
@@ -219,6 +239,15 @@ class _NoteEditPageState extends State<NoteEditPage> {
                       onPressed: () {
                         setState(() {
                           _isHidden = !_isHidden;
+                          // Update the visibility of the note if it's already created
+                          if (_currentNote != null) {
+                            context.read<NoteDatabase>().updateNote(
+                                  _currentNote!.id,
+                                  widget.titleController.text,
+                                  widget.descriptionController.text,
+                                  isHidden: _isHidden,
+                                );
+                          }
                         });
                       },
                     ),

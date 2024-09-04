@@ -51,28 +51,32 @@ class NoteTile extends StatelessWidget {
         ),
         margin: const EdgeInsets.only(top: 15, right: 10, left: 10),
         child: Padding(
-          padding: const EdgeInsets.all(8.0),
+          padding: const EdgeInsets.all(4.0),
           child: ListTile(
-            title: Text(
-              title,
-              style: TextStyle(
-                color: Theme.of(context).colorScheme.inversePrimary,
-                fontWeight: FontWeight.bold,
-                fontSize: 20,
-              ),
-            ),
-            subtitle: Padding(
-              padding: const EdgeInsets.only(top: 8.0),
-              child: ConstrainedBox(
-                constraints: const BoxConstraints(maxHeight: 200),
-                child: Text(
-                  description,
-                  style: TextStyle(
-                    color: Theme.of(context).colorScheme.inversePrimary,
-                  ),
-                ),
-              ),
-            ),
+            title: title.isNotEmpty
+                ? Text(
+                    title,
+                    style: TextStyle(
+                      color: Theme.of(context).colorScheme.inversePrimary,
+                      fontWeight: FontWeight.bold,
+                      fontSize: 20,
+                    ),
+                  )
+                : null,
+            subtitle: description.isNotEmpty
+                ? Padding(
+                    padding: const EdgeInsets.only(top: 8.0),
+                    child: ConstrainedBox(
+                      constraints: const BoxConstraints(maxHeight: 200),
+                      child: Text(
+                        description,
+                        style: TextStyle(
+                          color: Theme.of(context).colorScheme.inversePrimary,
+                        ),
+                      ),
+                    ),
+                  )
+                : null,
           ),
         ),
       ),
