@@ -4,6 +4,7 @@ import 'package:provider/provider.dart';
 import 'package:minimal_notes_app/models/note_database.dart';
 import 'package:minimal_notes_app/models/note.dart';
 import 'package:permission_handler/permission_handler.dart';
+import 'package:intl/intl.dart';
 
 class NoteEditPage extends StatefulWidget {
   final TextEditingController titleController;
@@ -38,7 +39,7 @@ class _NoteEditPageState extends State<NoteEditPage> {
       _currentNote = widget.note;
     } else {
       _isHidden = widget.showHiddenNotes;
-      _createBlankNote(); // Create a blank note when no note exists
+      _initializeBlankNote(); // Create a blank note asynchronously when no note exists
     }
 
     // Listen to title and description changes to auto-save
@@ -46,8 +47,32 @@ class _NoteEditPageState extends State<NoteEditPage> {
     widget.descriptionController.addListener(_autoSaveNote);
   }
 
-  Future<void> _createBlankNote() async {
-    _currentNote = await context.read<NoteDatabase>().createBlankNote();
+  Future<void> _initializeBlankNote() async {
+    _currentNote = await _createBlankNote();
+  }
+
+  Future<Note> _createBlankNote() async {
+    return await context.read<NoteDatabase>().createBlankNote();
+  }
+
+  String formatTimestamp(DateTime timestamp) {
+    DateTime now = DateTime.now();
+
+    if (timestamp.year == now.year) {
+      if (timestamp.day == now.day && timestamp.month == now.month) {
+        return DateFormat('h:mm a').format(timestamp); // Same day
+      } else {
+        return DateFormat('d MMM, h:mm a')
+            .format(timestamp); // Same year, different day
+      }
+    } else {
+      return DateFormat('d MMM yyyy, h:mm a')
+          .format(timestamp); // Different year
+    }
+  }
+
+  String formatFullDate(DateTime timestamp) {
+    return DateFormat('d MMM, yyyy  h:mm a').format(timestamp);
   }
 
   @override
@@ -61,17 +86,8 @@ class _NoteEditPageState extends State<NoteEditPage> {
   // Automatically save the note as the user types
   Future<void> _autoSaveNote() async {
     if (_currentNote != null) {
-      // Update the existing note
       await context.read<NoteDatabase>().updateNote(
             _currentNote!.id,
-            widget.titleController.text,
-            widget.descriptionController.text,
-            isHidden: _isHidden,
-          );
-    } else {
-      // Update the existing note
-      await context.read<NoteDatabase>().updateNote(
-            widget.note!.id,
             widget.titleController.text,
             widget.descriptionController.text,
             isHidden: _isHidden,
@@ -99,8 +115,14 @@ class _NoteEditPageState extends State<NoteEditPage> {
           )
         ],
         title: Text(
-          widget.note == null ? 'New Note' : '',
-          style: const TextStyle(fontWeight: FontWeight.bold),
+          widget.note == null
+              ? 'New Note'
+              : 'Edited ${formatTimestamp(_currentNote!.updatedAt)}',
+          style: TextStyle(
+              fontWeight: FontWeight.bold,
+              color: widget.note == null
+                  ? Theme.of(context).colorScheme.inversePrimary
+                  : Theme.of(context).colorScheme.secondary),
         ),
         elevation: 0,
         backgroundColor: Theme.of(context).colorScheme.surface,
@@ -138,6 +160,16 @@ class _NoteEditPageState extends State<NoteEditPage> {
                                     Theme.of(context).colorScheme.secondary)),
                       ),
                     ),
+                    if (_currentNote != null) ...[
+                      Padding(
+                        padding: const EdgeInsets.only(left: 16.0, right: 4.0),
+                        child: Text(
+                          '${formatFullDate(_currentNote!.createdAt)}',
+                          style: TextStyle(
+                              color: Theme.of(context).colorScheme.secondary),
+                        ),
+                      ),
+                    ],
                     Padding(
                       padding: const EdgeInsets.only(left: 4.0, right: 4.0),
                       child: TextField(
@@ -239,7 +271,6 @@ class _NoteEditPageState extends State<NoteEditPage> {
                       onPressed: () {
                         setState(() {
                           _isHidden = !_isHidden;
-                          // Update the visibility of the note if it's already created
                           if (_currentNote != null) {
                             context.read<NoteDatabase>().updateNote(
                                   _currentNote!.id,

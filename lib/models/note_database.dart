@@ -28,40 +28,45 @@ class NoteDatabase extends ChangeNotifier {
   // List of notes
   final List<Note> currentNotes = [];
 
-  // Start a new note or update an existing one in real-time
+  // Create a new blank note with timestamps
   Future<Note> createBlankNote() async {
-  await initialise(); // Ensure Isar is initialized
-  final newNote = Note()
-    ..title = ''
-    ..description = ''
-    ..isHidden = _showHiddenNotes;
-
-  await _isar!.writeTxn(() async {
-    await _isar!.notes.put(newNote);
-  });
-
-  await fetchNotes(); // Refresh the list of notes
-  return newNote;
-}
-
-  Future<void> updateNote(int id, String newTitle, String newDescription,
-      {required bool isHidden}) async {
     await initialise(); // Ensure Isar is initialized
-    try {
-      final existingNote = await _isar!.notes.get(id);
-      if (existingNote != null) {
-        existingNote
-          ..title = newTitle
-          ..description = newDescription
-          ..isHidden = isHidden; // Update isHidden based on provided parameter
+    final newNote = Note()
+      ..title = ''
+      ..description = ''
+      ..isHidden = _showHiddenNotes
+      ..createdAt = DateTime.now() // Set the creation time
+      ..updatedAt = DateTime.now(); // Set the last updated time
 
-        await _isar!.writeTxn(() async {
-          await _isar!.notes.put(existingNote);
-        });
-        await fetchNotes(); // Refresh the list of notes
-      }
-    } catch (e) {
-      print('Error updating note: $e');
+    await _isar!.writeTxn(() async {
+      await _isar!.notes.put(newNote);
+    });
+
+    await fetchNotes(); // Refresh the list of notes
+    return newNote;
+  }
+
+  // Update an existing note with new content and update the last edited time
+  Future<void> updateNote(
+    Id id,
+    String title,
+    String description, {
+    bool? isHidden,
+  }) async {
+    await initialise();
+    final note = await _isar!.notes.get(id);
+    if (note != null) {
+      note
+        ..title = title
+        ..description = description
+        ..isHidden = isHidden ?? note.isHidden
+        ..updatedAt = DateTime.now(); // Update the timestamp
+
+      await _isar!.writeTxn(() async {
+        await _isar!.notes.put(note);
+      });
+
+      await fetchNotes();
     }
   }
 
