@@ -137,26 +137,32 @@ class _NotesPageState extends State<NotesPage> {
         foregroundColor: Theme.of(context).colorScheme.inversePrimary,
         title: Padding(
           padding: const EdgeInsets.symmetric(horizontal: 8.0),
-          child: TextField(
-            controller: searchController,
-            decoration: InputDecoration(
-              prefixIcon: Icon(Icons.search,
-                  color: Theme.of(context).colorScheme.secondary),
-              hintText: 'Search $noteCount notes...',
-              hintStyle:
-                  TextStyle(color: Theme.of(context).colorScheme.secondary),
-              filled: true,
-              fillColor: Theme.of(context).colorScheme.surface,
-              border: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(10.0),
-                borderSide: BorderSide.none,
+          child: SizedBox(
+            height: 60,
+            child: Padding(
+              padding: const EdgeInsets.only(top: 8.0),
+              child: TextField(
+                controller: searchController,
+                decoration: InputDecoration(
+                  prefixIcon: Icon(Icons.search,
+                      color: Theme.of(context).colorScheme.secondary),
+                  hintText: 'Search $noteCount notes...',
+                  hintStyle:
+                      TextStyle(color: Theme.of(context).colorScheme.secondary),
+                  filled: true,
+                  fillColor: Theme.of(context).colorScheme.surface,
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(50.0),
+                    borderSide: BorderSide.none,
+                  ),
+                ),
+                onChanged: (query) {
+                  setState(() {
+                    searchQuery = query.toLowerCase();
+                  });
+                },
               ),
             ),
-            onChanged: (query) {
-              setState(() {
-                searchQuery = query.toLowerCase();
-              });
-            },
           ),
         ),
         actions: [

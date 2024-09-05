@@ -62,7 +62,7 @@ class _NoteEditPageState extends State<NoteEditPage> {
       if (timestamp.day == now.day && timestamp.month == now.month) {
         return DateFormat('h:mm a').format(timestamp); // Same day
       } else {
-        return DateFormat('d MMM, h:mm a')
+        return DateFormat('d MMM')
             .format(timestamp); // Same year, different day
       }
     } else {
@@ -95,6 +95,49 @@ class _NoteEditPageState extends State<NoteEditPage> {
     }
   }
 
+  void showAlertDialog(BuildContext context) {
+    // Set up the buttons
+    Widget cancelButton = TextButton(
+      child: Text("Cancel",
+          style: TextStyle(
+            color: Theme.of(context).colorScheme.inversePrimary,
+          )),
+      onPressed: () {
+        Navigator.of(context).pop(); // Close the dialog
+      },
+    );
+    Widget continueButton = TextButton(
+      child: const Text("Delete",
+          style:
+              TextStyle(color: Colors.redAccent, fontWeight: FontWeight.bold)),
+      onPressed: () {
+        // Add delete logic here
+        Navigator.of(context).pop(); // Close the dialog
+      },
+    );
+
+    // Set up the AlertDialog
+    AlertDialog alert = AlertDialog(
+      title: const Text(
+        "Delete Note",
+        style: TextStyle(fontWeight: FontWeight.bold),
+      ),
+      content: const Text("Would you like to delete this note?"),
+      actions: [
+        cancelButton,
+        continueButton,
+      ],
+    );
+
+    // Show the dialog
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return alert;
+      },
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -102,16 +145,27 @@ class _NoteEditPageState extends State<NoteEditPage> {
       resizeToAvoidBottomInset: true,
       appBar: AppBar(
         actions: [
-          Padding(
-            padding: const EdgeInsets.all(8.0),
-            child: IconButton(
-              icon: Icon(
-                Icons.check_rounded,
-                color: Theme.of(context).colorScheme.inversePrimary,
-                size: 25,
+          Row(
+            children: [
+              // IconButton(
+              //   icon: Icon(
+              //     Icons.delete,
+              //     color: Theme.of(context).colorScheme.inversePrimary,
+              //     size: 25,
+              //   ),
+              //   onPressed: () {
+              //     showAlertDialog(context);
+              //   },
+              // ),
+              IconButton(
+                icon: Icon(
+                  Icons.check_rounded,
+                  color: Theme.of(context).colorScheme.inversePrimary,
+                  size: 25,
+                ),
+                onPressed: () => Navigator.pop(context), // Just close the page
               ),
-              onPressed: () => Navigator.pop(context), // Just close the page
-            ),
+            ],
           )
         ],
         title: Text(
@@ -208,7 +262,7 @@ class _NoteEditPageState extends State<NoteEditPage> {
                   mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                   children: [
                     IconButton(
-                      icon: Icon(Icons.list),
+                      icon: const Icon(Icons.list),
                       onPressed: () {
                         setState(() {
                           _formattingStyle = (_formattingStyle + 1) % 3;
@@ -248,7 +302,7 @@ class _NoteEditPageState extends State<NoteEditPage> {
                       },
                     ),
                     IconButton(
-                      icon: Icon(Icons.image),
+                      icon: const Icon(Icons.image),
                       onPressed: () {
                         WidgetsBinding.instance.addPostFrameCallback((_) {
                           _requestPermissionAndPickImage();
@@ -256,7 +310,7 @@ class _NoteEditPageState extends State<NoteEditPage> {
                       },
                     ),
                     IconButton(
-                      icon: Icon(Icons.mic),
+                      icon: const Icon(Icons.mic),
                       onPressed: () {
                         WidgetsBinding.instance.addPostFrameCallback((_) {
                           _requestPermissionAndRecordAudio();
