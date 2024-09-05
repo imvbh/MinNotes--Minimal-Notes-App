@@ -135,109 +135,134 @@ class _NotesPageState extends State<NotesPage> {
         elevation: 0,
         backgroundColor: Theme.of(context).colorScheme.surface,
         foregroundColor: Theme.of(context).colorScheme.inversePrimary,
-        title: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 8.0),
-          child: SizedBox(
-            height: 60,
-            child: Padding(
-              padding: const EdgeInsets.only(top: 8.0),
-              child: TextField(
-                controller: searchController,
-                decoration: InputDecoration(
-                  prefixIcon: Icon(Icons.search,
-                      color: Theme.of(context).colorScheme.secondary),
-                  hintText: 'Search $noteCount notes...',
-                  hintStyle:
-                      TextStyle(color: Theme.of(context).colorScheme.secondary),
-                  filled: true,
-                  fillColor: Theme.of(context).colorScheme.surface,
-                  border: OutlineInputBorder(
+        title: SizedBox(
+          height: 60,
+          child: Padding(
+            padding: const EdgeInsets.only(bottom: 8.0, top: 10.0),
+            child: TextField(
+              textAlignVertical: TextAlignVertical.bottom,
+              maxLines: 1,
+              controller: searchController,
+              decoration: InputDecoration(
+                suffixIcon: Icon(Icons.search,
+                    color: Theme.of(context).colorScheme.secondary),
+                hintText: 'Search $noteCount notes...',
+                hintStyle:
+                    TextStyle(color: Theme.of(context).colorScheme.secondary),
+                filled: true,
+                fillColor: Theme.of(context).colorScheme.surface,
+                border: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(50.0),
-                    borderSide: BorderSide.none,
-                  ),
-                ),
-                onChanged: (query) {
-                  setState(() {
-                    searchQuery = query.toLowerCase();
-                  });
-                },
+                    borderSide: BorderSide()),
               ),
+              onChanged: (query) {
+                setState(() {
+                  searchQuery = query.toLowerCase();
+                });
+              },
             ),
           ),
         ),
-        actions: [
-          Padding(
-            padding: const EdgeInsets.all(8.0),
-            child: PopupMenuButton<int>(
-              onSelected: (value) {
-                switch (value) {
-                  case 0:
-                    setState(() {
-                      isPressed = !isPressed;
-                    });
-                    Provider.of<ThemeProvider>(context, listen: false)
-                        .toggleTheme();
-                    break;
-                  case 1:
-                    toggleCrossAxisCount();
-                    break;
-                  case 2:
-                    toggleReverseOrder();
-                    break;
-                }
-              },
-              itemBuilder: (context) => [
-                PopupMenuItem<int>(
-                  value: 0,
-                  child: Row(
-                    children: [
-                      Icon(
+        leading: Builder(
+          builder: (context) => IconButton(
+            icon: Icon(
+              Icons.menu,
+              size: 24,
+            ),
+            onPressed: () {
+              Scaffold.of(context).openDrawer(); // Open the drawer
+            },
+          ),
+        ),
+      ),
+      drawer: Drawer(
+        child: Column(
+          children: [
+            Expanded(
+              child: ListView(
+                padding: EdgeInsets.zero,
+                children: [
+                  DrawerHeader(
+                    decoration: BoxDecoration(
+                      color: Theme.of(context).colorScheme.primary,
+                    ),
+                    child: Center(
+                      // Centers the content of the DrawerHeader
+                      child: Text('MinNotes',
+                          style: GoogleFonts.dmSerifText(
+                            fontSize: 44,
+                            color: Theme.of(context).colorScheme.inversePrimary,
+                          )),
+                    ),
+                  ),
+                  ListTile(
+                    leading: Padding(
+                      padding: const EdgeInsets.all(8.0),
+                      child: Icon(
                         isPressed ? Icons.dark_mode : Icons.light_mode,
                         color: Theme.of(context).colorScheme.inversePrimary,
                       ),
-                      SizedBox(width: 8),
-                      Text(isPressed ? "Dark Mode" : "Light Mode"),
-                    ],
+                    ),
+                    title: Text(isPressed ? 'Dark Mode' : 'Light Mode'),
+                    onTap: () {
+                      setState(() {
+                        isPressed = !isPressed;
+                      });
+                      Provider.of<ThemeProvider>(context, listen: false)
+                          .toggleTheme();
+                      Navigator.pop(context); // Close the drawer
+                    },
                   ),
-                ),
-                PopupMenuItem<int>(
-                  value: 1,
-                  child: Row(
-                    children: [
-                      Icon(
-                        crossAxisCount == 2 ? Icons.grid_on : Icons.list,
+                  ListTile(
+                    leading: Padding(
+                      padding: const EdgeInsets.all(8.0),
+                      child: Icon(
+                        crossAxisCount == 2 ? Icons.list : Icons.grid_on,
                         color: Theme.of(context).colorScheme.inversePrimary,
                       ),
-                      SizedBox(width: 8),
-                      Text(crossAxisCount == 2 ? "Grid View" : "List View"),
-                    ],
+                    ),
+                    title:
+                        Text(crossAxisCount == 2 ? 'List View' : 'Grid View'),
+                    onTap: () {
+                      toggleCrossAxisCount();
+                      Navigator.pop(context); // Close the drawer
+                    },
                   ),
-                ),
-                PopupMenuItem<int>(
-                  value: 2,
-                  child: Row(
-                    children: [
-                      Icon(
+                  ListTile(
+                    leading: Padding(
+                      padding: const EdgeInsets.all(8.0),
+                      child: Icon(
                         reverseOrder
                             ? Icons.arrow_downward
                             : Icons.arrow_upward,
                         color: Theme.of(context).colorScheme.inversePrimary,
                       ),
-                      SizedBox(width: 8),
-                      Text(reverseOrder ? "Oldest First" : "Newest First"),
-                    ],
+                    ),
+                    title: Text(reverseOrder ? 'Oldest First' : 'Newest First'),
+                    onTap: () {
+                      toggleReverseOrder();
+                      Navigator.pop(context); // Close the drawer
+                    },
                   ),
-                ),
-              ],
+                ],
+              ),
             ),
-          ),
-        ],
+            Padding(
+              padding: const EdgeInsets.all(8.0),
+              child: Text(
+                'Made with ❤️ by imvbh',
+                style: TextStyle(
+                  color: Colors.grey.shade700,
+                  fontSize: 16,
+                ),
+              ),
+            ),
+          ],
+        ),
       ),
       backgroundColor: Theme.of(context).colorScheme.surface,
       floatingActionButton: FloatingActionButton(
-        onPressed: () {
-          createNote();
-        },
+        onPressed: createNote,
         backgroundColor: Theme.of(context).colorScheme.primary,
         child: Icon(
           Icons.add,
@@ -356,18 +381,6 @@ class _NotesPageState extends State<NotesPage> {
                       },
                     ),
                   ),
-          ),
-          Center(
-            child: Padding(
-              padding: const EdgeInsets.all(8.0),
-              child: Text(
-                'Made with ❤️ by imvbh',
-                style: TextStyle(
-                  color: Colors.grey.shade700,
-                  fontSize: 16,
-                ),
-              ),
-            ),
           ),
         ],
       ),

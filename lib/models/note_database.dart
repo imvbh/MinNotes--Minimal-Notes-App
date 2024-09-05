@@ -6,6 +6,7 @@ import 'package:path_provider/path_provider.dart';
 class NoteDatabase extends ChangeNotifier {
   static Isar? _isar;
   bool _showHiddenNotes = false;
+  bool _isFetching = false; // To prevent redundant fetch operations
 
   // Initialize the Isar database
   static Future<void> initialise() async {
@@ -21,8 +22,7 @@ class NoteDatabase extends ChangeNotifier {
   // Set the visibility of hidden notes
   void setShowHiddenNotes(bool showHiddenNotes) {
     _showHiddenNotes = showHiddenNotes;
-    fetchNotes(); // Refresh the list of notes when visibility mode changes
-    notifyListeners(); // Notify listeners to refresh the UI
+    fetchNotes(debounce: true); // Debounced fetching to prevent UI lag
   }
 
   // List of notes
@@ -42,7 +42,6 @@ class NoteDatabase extends ChangeNotifier {
       await _isar!.notes.put(newNote);
     });
 
-    await fetchNotes(); // Refresh the list of notes
     return newNote;
   }
 
@@ -65,13 +64,26 @@ class NoteDatabase extends ChangeNotifier {
       await _isar!.writeTxn(() async {
         await _isar!.notes.put(note);
       });
+    }
+    await fetchNotes(debounce: true);
+  }
 
-      await fetchNotes();
+  // Fetch all notes based on visibility mode with debouncing
+  Future<void> fetchNotes({bool debounce = false}) async {
+    if (_isFetching) return; // Prevent redundant fetch calls
+
+    if (debounce) {
+      _isFetching = true;
+      Future.delayed(Duration(milliseconds: 500), () async {
+        await _fetchNotes();
+        _isFetching = false;
+      });
+    } else {
+      await _fetchNotes();
     }
   }
 
-  // Fetch all notes based on visibility mode
-  Future<void> fetchNotes() async {
+  Future<void> _fetchNotes() async {
     await initialise(); // Ensure Isar is initialized
     try {
       List<Note> fetchedNotes;
