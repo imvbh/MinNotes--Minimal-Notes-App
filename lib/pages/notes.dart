@@ -25,9 +25,11 @@ class _NotesPageState extends State<NotesPage> {
   final searchController = TextEditingController();
   bool showHiddenNotes = false;
   bool isPressed = false;
+  bool _isSearchExpanded = false;
   int crossAxisCount = 2; // Default crossAxisCount
   bool reverseOrder = false; // Reverse order initially
   String searchQuery = '';
+  bool _isAutosaveEnabled = true; // Default is off
 
   @override
   void initState() {
@@ -58,6 +60,7 @@ class _NotesPageState extends State<NotesPage> {
           titleController: textController,
           descriptionController: textController2,
           showHiddenNotes: showHiddenNotes,
+          isAutosaveEnabled: _isAutosaveEnabled,
         ),
       ),
     );
@@ -79,6 +82,7 @@ class _NotesPageState extends State<NotesPage> {
           descriptionController: textController2,
           note: note,
           showHiddenNotes: showHiddenNotes,
+          isAutosaveEnabled: _isAutosaveEnabled,
         ),
       ),
     ).then((updatedNote) {
@@ -135,39 +139,90 @@ class _NotesPageState extends State<NotesPage> {
         elevation: 0,
         backgroundColor: Theme.of(context).colorScheme.surface,
         foregroundColor: Theme.of(context).colorScheme.inversePrimary,
-        title: SizedBox(
-          height: 60,
-          child: Padding(
-            padding: const EdgeInsets.only(bottom: 8.0, top: 10.0),
-            child: TextField(
-              textAlignVertical: TextAlignVertical.bottom,
-              maxLines: 1,
-              controller: searchController,
-              decoration: InputDecoration(
-                suffixIcon: Icon(Icons.search,
-                    color: Theme.of(context).colorScheme.secondary),
-                hintText: 'Search $noteCount notes...',
-                hintStyle:
-                    TextStyle(color: Theme.of(context).colorScheme.secondary),
-                filled: true,
-                fillColor: Theme.of(context).colorScheme.surface,
-                border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(50.0),
-                    borderSide: BorderSide()),
+        title: Padding(
+          padding: const EdgeInsets.all(6.0),
+          child: Row(
+            children: [
+              const Spacer(),
+              AnimatedContainer(
+                duration: const Duration(milliseconds: 300),
+                width: _isSearchExpanded
+                    ? MediaQuery.of(context).size.width - 100
+                    : 120,
+                height: 60,
+                child: _isSearchExpanded
+                    ? Padding(
+                        padding: const EdgeInsets.only(bottom: 8.0, top: 10.0),
+                        child: TextField(
+                          textAlignVertical: TextAlignVertical.bottom,
+                          maxLines: 1,
+                          controller: searchController,
+                          decoration: InputDecoration(
+                            suffixIcon: IconButton(
+                              alignment: const Alignment(-2, -2),
+                              icon: const Icon(Icons.close),
+                              color:
+                                  Theme.of(context).colorScheme.inversePrimary,
+                              onPressed: () {
+                                setState(() {
+                                  _isSearchExpanded = false;
+                                  textController.clear();
+                                });
+                              },
+                            ),
+                            hintText: 'Search $noteCount notes...',
+                            hintStyle: TextStyle(
+                              color: Theme.of(context).colorScheme.secondary,
+                            ),
+                            filled: true,
+                            fillColor: Theme.of(context).colorScheme.surface,
+                            border: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(50.0),
+                            ),
+                          ),
+                          onChanged: (query) {
+                            setState(() {
+                              searchQuery = query.toLowerCase();
+                            });
+                          },
+                        ),
+                      )
+                    : GestureDetector(
+                        onTap: () {
+                          setState(() {
+                            _isSearchExpanded = true;
+                          });
+                        },
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Text(
+                              '$noteCount Notes',
+                              style: TextStyle(
+                                color: Theme.of(context).colorScheme.secondary,
+                                fontSize: 20,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                            const SizedBox(width: 8),
+                            Icon(
+                              Icons.search,
+                              color:
+                                  Theme.of(context).colorScheme.inversePrimary,
+                              size: 28,
+                            ),
+                          ],
+                        ),
+                      ),
               ),
-              onChanged: (query) {
-                setState(() {
-                  searchQuery = query.toLowerCase();
-                });
-              },
-            ),
+            ],
           ),
         ),
         leading: Builder(
           builder: (context) => IconButton(
-            icon: Icon(
+            icon: const Icon(
               Icons.menu,
-              size: 24,
+              size: 28,
             ),
             onPressed: () {
               Scaffold.of(context).openDrawer(); // Open the drawer
@@ -176,6 +231,7 @@ class _NotesPageState extends State<NotesPage> {
         ),
       ),
       drawer: Drawer(
+        width: 275,
         child: Column(
           children: [
             Expanded(
@@ -244,6 +300,51 @@ class _NotesPageState extends State<NotesPage> {
                       Navigator.pop(context); // Close the drawer
                     },
                   ),
+                  Divider(),
+                  ListTile(
+                    leading: Icon(
+                      _isAutosaveEnabled ? Icons.save : Icons.save_alt,
+                      color: Theme.of(context).colorScheme.inversePrimary,
+                    ),
+                    title: Text(_isAutosaveEnabled
+                        ? 'Autosave Enabled'
+                        : 'Autosave Disabled'),
+                    trailing: Switch(
+                      value: _isAutosaveEnabled,
+                      onChanged: (value) {
+                        setState(() {
+                          _isAutosaveEnabled = value;
+                        });
+                        Navigator.pop(context); // Close the drawer
+                      },
+                    ),
+                  ),
+                  ListTile(
+                    leading: Padding(
+                      padding: const EdgeInsets.all(8.0),
+                      child: Icon(
+                        Icons.delete_sweep_rounded,
+                        color: Theme.of(context).colorScheme.inversePrimary,
+                      ),
+                    ),
+                    title: const Text("Recycle Bin"),
+                    onTap: () {
+                      Navigator.pop(context); // Close the drawer
+                    },
+                  ),
+                  ListTile(
+                    leading: Padding(
+                      padding: const EdgeInsets.all(8.0),
+                      child: Icon(
+                        Icons.settings,
+                        color: Theme.of(context).colorScheme.inversePrimary,
+                      ),
+                    ),
+                    title: const Text("Settings"),
+                    onTap: () {
+                      Navigator.pop(context); // Close the drawer
+                    },
+                  ),
                 ],
               ),
             ),
@@ -269,120 +370,137 @@ class _NotesPageState extends State<NotesPage> {
           color: Theme.of(context).colorScheme.inversePrimary,
         ),
       ),
-      body: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Padding(
-            padding: const EdgeInsets.only(left: 25.0, right: 25.0),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                GestureDetector(
-                  onDoubleTap: () {
-                    if (showHiddenNotes) {
-                      setState(() {
-                        showHiddenNotes = false;
-                        context.read<NoteDatabase>().setShowHiddenNotes(false);
-                      });
-                    } else {
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder: (context) => HiddenNotesPatternPage(),
-                        ),
-                      ).then((value) {
-                        if (value == true) {
-                          setState(() {
-                            showHiddenNotes = true;
-                            context
-                                .read<NoteDatabase>()
-                                .setShowHiddenNotes(true);
-                          });
-                        }
-                      });
-                    }
-                  },
-                  child: Row(
-                    children: [
-                      Center(
-                        child: Text(
-                          showHiddenNotes ? "Hidden Notes " : "MinNotes ",
-                          style: GoogleFonts.dmSerifText(
-                            fontSize: 44,
-                            color: Theme.of(context).colorScheme.inversePrimary,
+      body: GestureDetector(
+        onTap: () {
+          if (_isSearchExpanded) {
+            setState(() {
+              _isSearchExpanded =
+                  false; // Collapse search bar when clicking outside
+            });
+          }
+        },
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Padding(
+              padding: const EdgeInsets.only(left: 25.0, right: 25.0),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  GestureDetector(
+                    onDoubleTap: () {
+                      if (showHiddenNotes) {
+                        setState(() {
+                          showHiddenNotes = false;
+                          context
+                              .read<NoteDatabase>()
+                              .setShowHiddenNotes(false);
+                        });
+                      } else {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (context) => HiddenNotesPatternPage(),
+                          ),
+                        ).then((value) {
+                          if (value == true) {
+                            setState(() {
+                              showHiddenNotes = true;
+                              context
+                                  .read<NoteDatabase>()
+                                  .setShowHiddenNotes(true);
+                            });
+                          }
+                        });
+                      }
+                    },
+                    child: Row(
+                      children: [
+                        Center(
+                          child: Text(
+                            showHiddenNotes ? "Hidden Notes " : "MinNotes ",
+                            style: GoogleFonts.dmSerifText(
+                              fontSize: 44,
+                              color:
+                                  Theme.of(context).colorScheme.inversePrimary,
+                            ),
                           ),
                         ),
-                      ),
-                      if (showHiddenNotes)
-                        const Icon(Icons.lock_outline, size: 30),
-                    ],
-                  ),
-                ),
-              ],
-            ),
-          ),
-          Container(
-              padding:
-                  const EdgeInsets.only(left: 35.0, right: 35.0, bottom: 4.0),
-              child: Divider(
-                color: Theme.of(context).colorScheme.inversePrimary,
-              )),
-          Expanded(
-            child: (isEmpty)
-                ? Center(
-                    child: Text(
-                      "Add New Notes with the '+' Icon",
-                      style: TextStyle(
-                        fontSize: 25,
-                        color: Theme.of(context).colorScheme.inversePrimary,
-                      ),
-                      textAlign: TextAlign.center,
+                        if (showHiddenNotes)
+                          const Icon(Icons.lock_outline, size: 30),
+                      ],
                     ),
-                  )
-                : Padding(
-                    padding: const EdgeInsets.only(left: 10.0, right: 10.0),
-                    child: MasonryGridView.count(
-                      crossAxisCount: crossAxisCount,
-                      mainAxisSpacing: 0,
-                      crossAxisSpacing: 0,
-                      itemCount: showHiddenNotes
-                          ? currentNotes.where((note) => note.isHidden).length
-                          : currentNotes.where((note) => !note.isHidden).length,
-                      itemBuilder: (context, index) {
-                        final note = showHiddenNotes
-                            ? currentNotes
-                                .where((note) => note.isHidden)
-                                .toList()[index]
+                  ),
+                ],
+              ),
+            ),
+            Container(
+                padding:
+                    const EdgeInsets.only(left: 35.0, right: 35.0, bottom: 4.0),
+                child: Divider(
+                  color: Theme.of(context).colorScheme.inversePrimary,
+                )),
+            Expanded(
+              child: (isEmpty)
+                  ? Center(
+                      child: Text(
+                        "Add New Notes with the '+' Icon",
+                        style: TextStyle(
+                          fontSize: 25,
+                          color: Theme.of(context).colorScheme.inversePrimary,
+                        ),
+                        textAlign: TextAlign.center,
+                      ),
+                    )
+                  : Padding(
+                      padding: const EdgeInsets.only(left: 10.0, right: 10.0),
+                      child: MasonryGridView.count(
+                        crossAxisCount: crossAxisCount,
+                        mainAxisSpacing: 0,
+                        crossAxisSpacing: 0,
+                        itemCount: showHiddenNotes
+                            ? currentNotes.where((note) => note.isHidden).length
                             : currentNotes
                                 .where((note) => !note.isHidden)
-                                .toList()[index];
+                                .length,
+                        itemBuilder: (context, index) {
+                          final note = showHiddenNotes
+                              ? currentNotes
+                                  .where((note) => note.isHidden)
+                                  .toList()[index]
+                              : currentNotes
+                                  .where((note) => !note.isHidden)
+                                  .toList()[index];
 
-                        return NoteTile(
-                            title: note.title,
-                            description: note.description,
-                            isHidden: note.isHidden, // Pass the isHidden state
-                            onEditPressed: () => updateNote(note),
-                            onDeletePressed: () => deleteNote(note.id),
-                            onHidePressed: (bool hidden) {
-                              setState(() {
-                                note.isHidden = hidden;
+                          return NoteTile(
+                              title: note.title,
+                              description: note.description,
+                              isHidden:
+                                  note.isHidden, // Pass the isHidden state
+                              onEditPressed: () => updateNote(note),
+                              onDeletePressed: () => deleteNote(note.id),
+                              onHidePressed: (bool hidden) {
+                                setState(() {
+                                  note.isHidden = hidden;
+                                });
+                                // Update note in the database
+                                WidgetsBinding.instance
+                                    .addPostFrameCallback((_) {
+                                  context.read<NoteDatabase>().updateNote(
+                                        note.id,
+                                        note.title,
+                                        note.description,
+                                        isHidden:
+                                            hidden, // Pass the new hidden state
+                                      );
+                                });
                               });
-                              // Update note in the database
-                              WidgetsBinding.instance.addPostFrameCallback((_) {
-                                context.read<NoteDatabase>().updateNote(
-                                      note.id,
-                                      note.title,
-                                      note.description,
-                                      isHidden:
-                                          hidden, // Pass the new hidden state
-                                    );
-                              });
-                            });
-                      },
+                        },
+                      ),
                     ),
-                  ),
-          ),
-        ],
+            ),
+          ],
+        ),
       ),
     );
   }

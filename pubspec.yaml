@@ -45,7 +45,6 @@ dependencies:
   pattern_lock: ^2.0.0
   permission_handler: ^11.0.1
   image_picker: ^1.0.7
-  flutter_sound: ^9.2.13
   shared_preferences: ^2.2.2
   badges: ^3.1.2
   intl: ^0.19.0

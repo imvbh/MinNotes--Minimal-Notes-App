@@ -1,4 +1,5 @@
-import 'package:flutter/cupertino.dart';
+import 'dart:async';
+import 'package:flutter/material.dart';
 import 'package:isar/isar.dart';
 import 'package:minimal_notes_app/models/note.dart';
 import 'package:path_provider/path_provider.dart';
@@ -6,11 +7,12 @@ import 'package:path_provider/path_provider.dart';
 class NoteDatabase extends ChangeNotifier {
   static Isar? _isar;
   bool _showHiddenNotes = false;
-  bool _isFetching = false; // To prevent redundant fetch operations
+  bool _isFetching = false;
+  Timer? _fetchDebounceTimer;
 
   // Initialize the Isar database
   static Future<void> initialise() async {
-    if (_isar != null) return; // Check if _isar has already been initialized
+    if (_isar != null) return;
     final dir = await getApplicationDocumentsDirectory();
     try {
       _isar = await Isar.open([NoteSchema], directory: dir.path);
@@ -22,7 +24,7 @@ class NoteDatabase extends ChangeNotifier {
   // Set the visibility of hidden notes
   void setShowHiddenNotes(bool showHiddenNotes) {
     _showHiddenNotes = showHiddenNotes;
-    fetchNotes(debounce: true); // Debounced fetching to prevent UI lag
+    fetchNotes(); // Debounced fetching to prevent UI lag
   }
 
   // List of notes
@@ -30,17 +32,21 @@ class NoteDatabase extends ChangeNotifier {
 
   // Create a new blank note with timestamps
   Future<Note> createBlankNote() async {
-    await initialise(); // Ensure Isar is initialized
+    await initialise();
     final newNote = Note()
       ..title = ''
       ..description = ''
       ..isHidden = _showHiddenNotes
-      ..createdAt = DateTime.now() // Set the creation time
-      ..updatedAt = DateTime.now(); // Set the last updated time
+      ..createdAt = DateTime.now()
+      ..updatedAt = DateTime.now();
 
-    await _isar!.writeTxn(() async {
-      await _isar!.notes.put(newNote);
-    });
+    try {
+      await _isar!.writeTxn(() async {
+        await _isar!.notes.put(newNote);
+      });
+    } catch (e) {
+      print('Error creating note: $e');
+    }
 
     return newNote;
   }
@@ -51,6 +57,7 @@ class NoteDatabase extends ChangeNotifier {
     String title,
     String description, {
     bool? isHidden,
+    List<String>? imagePaths,
   }) async {
     await initialise();
     final note = await _isar!.notes.get(id);
@@ -59,64 +66,77 @@ class NoteDatabase extends ChangeNotifier {
         ..title = title
         ..description = description
         ..isHidden = isHidden ?? note.isHidden
-        ..updatedAt = DateTime.now(); // Update the timestamp
+        ..updatedAt = DateTime.now();
+      if (imagePaths != null) {
+        note.imagePaths = imagePaths;
+      }
 
-      await _isar!.writeTxn(() async {
-        await _isar!.notes.put(note);
-      });
+      try {
+        await _isar!.writeTxn(() async {
+          await _isar!.notes.put(note);
+        });
+        print('Saving note with imagePaths: ${note.imagePaths}');
+      } catch (e) {
+        print('Error updating note: $e');
+      }
     }
-    await fetchNotes(debounce: true);
+
+    fetchNotes();
   }
 
   // Fetch all notes based on visibility mode with debouncing
-  Future<void> fetchNotes({bool debounce = false}) async {
-    if (_isFetching) return; // Prevent redundant fetch calls
-
-    if (debounce) {
-      _isFetching = true;
-      Future.delayed(Duration(milliseconds: 500), () async {
-        await _fetchNotes();
-        _isFetching = false;
-      });
-    } else {
-      await _fetchNotes();
+  void fetchNotes() {
+    if (_fetchDebounceTimer?.isActive ?? false) {
+      _fetchDebounceTimer!.cancel();
     }
+    _fetchDebounceTimer = Timer(Duration(milliseconds: 500), () async {
+      await _fetchNotes();
+    });
   }
 
   Future<void> _fetchNotes() async {
-    await initialise(); // Ensure Isar is initialized
+    if (_isFetching) return;
+
+    _isFetching = true;
     try {
+      await initialise();
+
       List<Note> fetchedNotes;
       if (_showHiddenNotes) {
-        // Fetch all notes including hidden ones
         fetchedNotes = await _isar!.notes.where().findAll();
       } else {
-        // Fetch only visible notes
         fetchedNotes = await _isar!.notes
             .where()
             .filter()
             .isHiddenEqualTo(false)
             .findAll();
       }
+
+      for (var note in fetchedNotes) {
+        note.imagePaths ??= [];
+        print('Fetched note with imagePaths: ${note.imagePaths}');
+      }
+
       currentNotes.clear();
       currentNotes.addAll(fetchedNotes);
-      notifyListeners(); // Notify listeners to refresh the UI
+      notifyListeners();
     } catch (e) {
       print('Error fetching notes: $e');
+    } finally {
+      _isFetching = false;
     }
   }
 
   // Delete a note
   Future<void> deleteNote(int id) async {
-    await initialise(); // Ensure Isar is initialized
+    await initialise();
     try {
       await _isar!.writeTxn(() async {
         await _isar!.notes.delete(id);
       });
-      await fetchNotes(); // Refresh the list of notes
+      fetchNotes();
     } catch (e) {
       print('Error deleting note: $e');
-      // Handle the error as needed
     }
   }
 }

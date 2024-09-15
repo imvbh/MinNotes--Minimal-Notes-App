@@ -12,8 +12,12 @@ class Note {
   late bool isHidden;
   late DateTime createdAt;
   late DateTime updatedAt;
+  List<String>? imagePaths;
+  
+  String? audioPath;
 
   Note({
     this.isHidden = false, // Initialize as needed
+    this.imagePaths,
   });
 }

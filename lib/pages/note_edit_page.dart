@@ -1,5 +1,9 @@
 import 'package:flutter/material.dart';
+import 'dart:io';
 import 'package:image_picker/image_picker.dart';
+import 'package:minimal_notes_app/pages/Drawing/drawing_page.dart';
+import 'package:minimal_notes_app/pages/imageview.dart';
+import 'package:path_provider/path_provider.dart';
 import 'package:provider/provider.dart';
 import 'package:minimal_notes_app/models/note_database.dart';
 import 'package:minimal_notes_app/models/note.dart';
@@ -11,6 +15,7 @@ class NoteEditPage extends StatefulWidget {
   final TextEditingController descriptionController;
   final Note? note;
   final bool showHiddenNotes;
+  final bool isAutosaveEnabled;
 
   const NoteEditPage({
     Key? key,
@@ -18,6 +23,7 @@ class NoteEditPage extends StatefulWidget {
     required this.descriptionController,
     this.note,
     required this.showHiddenNotes,
+    required this.isAutosaveEnabled,
   }) : super(key: key);
 
   @override
@@ -25,13 +31,18 @@ class NoteEditPage extends StatefulWidget {
 }
 
 class _NoteEditPageState extends State<NoteEditPage> {
+  List<String> _selectedImages = [];
   int _formattingStyle = 0;
   bool _isHidden = false;
   Note? _currentNote;
+  bool get _isAutosaveEnabled => widget.isAutosaveEnabled;
+
+  // Default is off
 
   @override
   void initState() {
     super.initState();
+
     if (widget.note != null) {
       _isHidden = widget.note!.isHidden;
       widget.titleController.text = widget.note!.title;
@@ -77,7 +88,6 @@ class _NoteEditPageState extends State<NoteEditPage> {
 
   @override
   void dispose() {
-    // Remove listeners when the widget is disposed
     widget.titleController.removeListener(_autoSaveNote);
     widget.descriptionController.removeListener(_autoSaveNote);
     super.dispose();
@@ -85,7 +95,7 @@ class _NoteEditPageState extends State<NoteEditPage> {
 
   // Automatically save the note as the user types
   Future<void> _autoSaveNote() async {
-    if (_currentNote != null) {
+    if (_isAutosaveEnabled && _currentNote != null) {
       await context.read<NoteDatabase>().updateNote(
             _currentNote!.id,
             widget.titleController.text,
@@ -147,16 +157,16 @@ class _NoteEditPageState extends State<NoteEditPage> {
         actions: [
           Row(
             children: [
-              // IconButton(
-              //   icon: Icon(
-              //     Icons.delete,
-              //     color: Theme.of(context).colorScheme.inversePrimary,
-              //     size: 25,
-              //   ),
-              //   onPressed: () {
-              //     showAlertDialog(context);
-              //   },
-              // ),
+              IconButton(
+                icon: Icon(
+                  Icons.delete,
+                  color: Theme.of(context).colorScheme.inversePrimary,
+                  size: 25,
+                ),
+                onPressed: () {
+                  showAlertDialog(context);
+                },
+              ),
               IconButton(
                 icon: Icon(
                   Icons.check_rounded,
@@ -191,6 +201,79 @@ class _NoteEditPageState extends State<NoteEditPage> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
+                    Padding(
+                      padding: const EdgeInsets.symmetric(vertical: 8.0),
+                      child: Wrap(
+                        spacing: 8.0,
+                        runSpacing: 8.0,
+                        children: _currentNote != null &&
+                                _currentNote!.imagePaths != null &&
+                                _currentNote!.imagePaths!.isNotEmpty
+                            ? _currentNote!.imagePaths!.map((imagePath) {
+                                return Stack(
+                                  children: [
+                                    ClipRRect(
+                                      borderRadius: BorderRadius.circular(8.0),
+                                      child: GestureDetector(
+                                        onTap: () {
+                                          Navigator.push(
+                                            context,
+                                            MaterialPageRoute(
+                                              builder: (context) =>
+                                                  FullscreenImageView(
+                                                imagePath: imagePath,
+                                                onDelete: () {
+                                                  setState(() {
+                                                    _currentNote!.imagePaths!
+                                                        .remove(imagePath);
+                                                  });
+                                                  saveNoteWithImages(
+                                                      _currentNote!); // Update the saved note
+                                                  Navigator.pop(
+                                                      context); // Go back after deletion
+                                                },
+                                              ),
+                                            ),
+                                          );
+                                        },
+                                        child: Image.file(
+                                          File(imagePath),
+                                          width: 100,
+                                          height: 100,
+                                          fit: BoxFit.cover,
+                                        ),
+                                      ),
+                                    ),
+                                    Positioned(
+                                      right: 2,
+                                      top: 2,
+                                      child: Container(
+                                        width: 30,
+                                        decoration: const BoxDecoration(
+                                          color: Color.fromARGB(
+                                              133, 255, 255, 255),
+                                          shape: BoxShape.circle,
+                                        ),
+                                        child: IconButton(
+                                          icon:
+                                              const Icon(Icons.close, size: 16),
+                                          onPressed: () {
+                                            setState(() {
+                                              _currentNote!.imagePaths!
+                                                  .remove(imagePath);
+                                            });
+                                            saveNoteWithImages(
+                                                _currentNote!); // Update the saved note
+                                          },
+                                        ),
+                                      ),
+                                    ),
+                                  ],
+                                );
+                              }).toList()
+                            : [],
+                      ),
+                    ),
                     Padding(
                       padding: const EdgeInsets.only(left: 4.0, right: 4.0),
                       child: TextField(
@@ -302,6 +385,16 @@ class _NoteEditPageState extends State<NoteEditPage> {
                       },
                     ),
                     IconButton(
+                      icon: const Icon(Icons.color_lens),
+                      onPressed: () {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                              builder: (context) => DrawingPage()),
+                        );
+                      },
+                    ),
+                    IconButton(
                       icon: const Icon(Icons.image),
                       onPressed: () {
                         WidgetsBinding.instance.addPostFrameCallback((_) {
@@ -349,15 +442,42 @@ class _NoteEditPageState extends State<NoteEditPage> {
   Future<void> _requestPermissionAndPickImage() async {
     final status = await Permission.photos.request();
     if (status.isGranted) {
-      final imagePicker = ImagePicker();
-      final image = await imagePicker.pickImage(source: ImageSource.gallery);
+      final pickedFiles = await ImagePicker().pickMultiImage();
+      if (pickedFiles != null) {
+        setState(() {
+          _selectedImages = pickedFiles.map((file) => file.path).toList();
+        });
 
-      if (image != null) {
-        // Handle the selected image
+        if (_currentNote != null) {
+          await updateNoteWithImages(_currentNote!);
+        }
+      } else {
+        // Handle case where no images were picked
       }
     } else {
       // Handle permission denied
     }
+  }
+
+  Future<void> updateNoteWithImages(Note note) async {
+    final imagePaths = await Future.wait(
+      _selectedImages.map((imagePath) async {
+        final savedPath = await saveImage(File(imagePath));
+        return savedPath;
+      }).toList(),
+    );
+
+    print('Image Paths: $imagePaths'); // Debug log
+    note.imagePaths = imagePaths;
+    await saveNoteWithImages(note);
+  }
+
+  Future<String> saveImage(File image) async {
+    final directory = await getApplicationDocumentsDirectory();
+    final imagePath =
+        '${directory.path}/${DateTime.now().millisecondsSinceEpoch}.png';
+    final imageFile = await image.copy(imagePath);
+    return imageFile.path;
   }
 
   Future<void> _requestPermissionAndRecordAudio() async {
@@ -367,5 +487,17 @@ class _NoteEditPageState extends State<NoteEditPage> {
     } else {
       // Handle permission denied
     }
+  }
+
+  Future<void> saveNoteWithImages(Note note) async {
+    final noteDatabase = context.read<NoteDatabase>();
+
+    await noteDatabase.updateNote(
+      note.id,
+      note.title,
+      note.description,
+      isHidden: note.isHidden, // Named argument
+      imagePaths: note.imagePaths, // Named argument
+    );
   }
 }
